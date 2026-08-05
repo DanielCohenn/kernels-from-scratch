@@ -1,6 +1,34 @@
+# CUDA intermediates
 *.i
 *.ii
 *.gpu
 *.ptx
 *.cubin
 *.fatbin
+
+# Build artifacts
+build/
+*.o
+*.obj
+*.out
+*.a
+*.so
+
+# Nsight profiler output (raw reports are large/binary; commit summaries in README instead)
+*.ncu-rep
+*.nsys-rep
+*.sqlite
+*.qdrep
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editor / OS
+*.swp
+.DS_Store
+
+*.md
+*.csv

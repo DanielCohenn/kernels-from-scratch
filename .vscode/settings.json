@@ -1,0 +1,30 @@
+{
+  "github.copilot.enable": {
+    "*": false
+  },
+  "editor.inlineSuggest.enabled": false,
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "clangd.path": "/root/.vscode-server/data/User/globalStorage/llvm-vs-code-extensions.vscode-clangd/install/22.1.6/clangd_22.1.6/bin/clangd",
+  "clangd.arguments": [
+    "--background-index",
+    "--header-insertion=never"
+  ],
+  "files.associations": {
+    "*.cuh": "cuda-cpp",
+    "*.cu": "cuda-cpp"
+  },
+  "cSpell.words": [
+    "CUDA",
+    "cudaMalloc",
+    "cudaMemcpy",
+    "cudaFree",
+    "cudaMemset",
+    "cudaDeviceSynchronize",
+    "cudaGetLastError",
+    "cudaError",
+    "cublas",
+    "cuBLAS",
+    "sgemm",
+    "cuh"
+  ]
+}
