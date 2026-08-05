@@ -27,7 +27,7 @@ __pycache__/
 venv/
 
 # Editor / OS
-.vscode/
-.clangd
 *.swp
 .DS_Store
+
+*.md
