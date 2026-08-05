@@ -5,8 +5,15 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import torch
+from matplotlib.ticker import FixedLocator, FixedFormatter, NullLocator
 
 DTYPE_BYTES = {"f": 4, "d": 8, "float32": 4, "float64": 8}
+
+
+def gpu_name():
+    if torch.cuda.is_available():
+        return torch.cuda.get_device_name(0)
+    return "unknown GPU"
 
 
 def load_csvs(paths):
@@ -43,6 +50,14 @@ def torch_baseline(sizes, dtype=torch.float32, warmup=5, iters=20):
     return pd.DataFrame(rows)
 
 
+def format_log_x(ax, sizes):
+    ax.set_xscale("log", base=2)
+    ax.xaxis.set_major_locator(FixedLocator(sizes))
+    ax.xaxis.set_major_formatter(FixedFormatter([str(s) for s in sizes]))
+    ax.xaxis.set_minor_locator(NullLocator())
+    plt.setp(ax.get_xticklabels(), rotation=45)
+
+
 def tflops(row):
     return 2 * row["m"] * row["n"] * row["k"] / (row["time_ms"] * 1e-3) / 1e12
 
@@ -64,33 +79,36 @@ def main():
 
     paths = [p for pattern in args.csvs for p in sorted(glob.glob(pattern))]
     df = load_csvs(paths)
-    df = df[(df["m"] == df["n"]) & (df["m"] == df["k"])].copy()
-    df["mat_size"] = df["m"]
+    df = df[(df["m"] == df["n"]) & (df["m"] == df["k"]) & (df["is_valid"] == 1)].copy()
 
     if not args.no_pytorch:
         if not torch.cuda.is_available():
             raise RuntimeError("CUDA not available for torch baseline")
-        sizes = sorted(df["mat_size"].unique().tolist())
+        sizes = sorted(df["m"].unique().tolist())
         df = pd.concat([df, torch_baseline(sizes)], ignore_index=True)
+
+    df["mat_size"] = df["m"]
 
     df["tflops"] = df.apply(tflops, axis=1)
     df["mem_bw_gbs"] = df.apply(mem_bw_gbs, axis=1)
 
     phases = df["phase"].unique()
+    sizes = sorted(df["mat_size"].unique().tolist())
     fig, axes = plt.subplots(2, 2, figsize=(12, 9))
+    fig.suptitle(f"GEMM benchmark — {gpu_name()}")
 
     ax = axes[0, 0]
     for phase in phases:
         sub = df[df["phase"] == phase].sort_values("mat_size")
         ax.plot(sub["mat_size"], sub["tflops"], marker="o", label=phase)
-    ax.set_xlabel("Matrix size (n)"); ax.set_ylabel("TFLOPs"); ax.set_xscale("log", base=2)
+    ax.set_xlabel("Matrix size (n)"); ax.set_ylabel("TFLOP/s"); format_log_x(ax, sizes)
     ax.set_title("TFLOPs vs matrix size"); ax.legend()
 
     ax = axes[0, 1]
     for phase in phases:
         sub = df[df["phase"] == phase].sort_values("mat_size")
         ax.plot(sub["mat_size"], sub["mem_bw_gbs"], marker="o", label=phase)
-    ax.set_xlabel("Matrix size (n)"); ax.set_ylabel("Mem BW (GB/s, idealized)"); ax.set_xscale("log", base=2)
+    ax.set_xlabel("Matrix size (n)"); ax.set_ylabel("Mem BW (GB/s, idealized)"); format_log_x(ax, sizes)
     ax.set_title("Memory bandwidth vs matrix size"); ax.legend()
 
     ax = axes[1, 0]
@@ -98,7 +116,7 @@ def main():
         sub = df[df["phase"] == phase].sort_values("mat_size")
         ax.plot(sub["mat_size"], sub["time_ms"], marker="o", label=phase)
     ax.set_xlabel("Matrix size (n)"); ax.set_ylabel("Time (ms)")
-    ax.set_xscale("log", base=2); ax.set_yscale("log")
+    format_log_x(ax, sizes)
     ax.set_title("Time vs matrix size"); ax.legend()
 
     ax = axes[1, 1]
@@ -112,12 +130,12 @@ def main():
             ax.plot(sub["mat_size"], speedup, marker="o", label=phase)
         ax.axhline(1.0, color="gray", linestyle="--", linewidth=1)
         ax.set_xlabel("Matrix size (n)"); ax.set_ylabel("Speedup vs PyTorch")
-        ax.set_xscale("log", base=2)
+        format_log_x(ax, sizes)
         ax.set_title("Speedup vs PyTorch"); ax.legend()
     else:
         ax.text(0.5, 0.5, "no pytorch baseline", ha="center", va="center")
 
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0, 1, 0.96))
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, dpi=150)
     print(f"Saved {args.out}")
