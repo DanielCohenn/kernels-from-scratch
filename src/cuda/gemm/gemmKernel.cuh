@@ -4,13 +4,9 @@
 
 struct GemmMetrics {
     std::string phase;
-
     int m, n, k;
-
     std::string dtype;
-
     float timeMs;
-
     bool isValid;
 };
 
