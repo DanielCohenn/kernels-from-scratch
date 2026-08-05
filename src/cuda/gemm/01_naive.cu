@@ -8,7 +8,17 @@ template <typename T>
 __global__ void naive_gemm_kernel(const T* __restrict__ A, const T* __restrict__ B, T* __restrict__ C, 
                                     int m, int n, int k, T alpha, T beta)
 {
+    int tx = blockIdx.x * blockDim.x + threadIdx.x;
+    int ty = blockIdx.y * blockDim.y + threadIdx.y;
 
+    if ((tx < m) && (ty < n)) {
+        T res = 0;
+        for (int i = 0; i < k; ++i) {
+            res += A[tx * k + i] * B[i * n + ty];
+        }
+
+        C[tx * n + ty] = alpha * res + beta * C[tx * n + ty];
+    }
 }
 
 
@@ -42,11 +52,13 @@ int main(int argc, char** argv)
     for (int i = 0; i < m * k; ++i) h_matA[i] = static_cast<float>(rand()) / RAND_MAX;
     for (int i = 0; i < k * n; ++i) h_matB[i] = static_cast<float>(rand()) / RAND_MAX;
 
-    NaiveGemm<float> gemm(m, n, k);
+    NaiveGemm<float> gemm(m, n, k, "gemm_naive_cuda");
     GemmMetrics metrics = gemm.run(h_matA, h_matB, h_matC, alpha, beta);
 
     std::cout << metrics.phase << " m=" << metrics.m << " n=" << metrics.n << " k=" << metrics.k
               << " time(ms)=" << metrics.timeMs << " valid=" << metrics.isValid << std::endl;
+
+    writeMetricsCSV(metrics, "bench/gemm_results.csv");
 
     delete[] h_matA;
     delete[] h_matB;
