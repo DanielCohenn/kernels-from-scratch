@@ -48,6 +48,9 @@ public:
     T* h_resReference;
 
     GemmKernel(int m, int n, int k, std::string phase = "unnamed") : m(m), n(n), k(k), phase(phase) {
+        this->m = m;
+        this->n = n;
+        this->k = k;
         h_resReference = new T[m * n]();
         threadsPerBlock = dim3(THREADS_PER_BLOCK, THREADS_PER_BLOCK);
         blocksPerGrid = dim3((m + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK,
