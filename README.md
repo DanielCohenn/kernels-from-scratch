@@ -26,9 +26,21 @@ ncu/          Nsight Compute summaries (raw .ncu-rep gitignored — too large/bi
 ## Build
 
 ```
-make ARCH=sm_86    # RTX A5000 (daily driver)
-make ARCH=sm_120    # RTX PRO 4000 Blackwell (TMA / FP8 / NVFP4 work)
+python build.py     # auto-detects the local GPU's compute capability, syncs .clangd, runs make
+make ARCH=sm_86      # manual override: RTX A5000 (daily driver)
+make ARCH=sm_120      # manual override: RTX PRO 4000 Blackwell (TMA / FP8 / NVFP4 work)
 ```
+
+Default build is release: `-O3`, `--use_fast_math`, `-march=native`. For benchmarking, this is what
+you want — timings should reflect the fully-optimized kernel. For `cuda-gdb`/stepping through a
+kernel, build debug instead (unoptimized, device symbols, no fast-math):
+
+```
+make DEBUG=1                  # or: python build.py DEBUG=1
+```
+
+Switching between release and debug forces a full rebuild even though the `.cu` sources didn't
+change (the Makefile tracks the active flags, not just file mtimes).
 
 ## Hardware
 

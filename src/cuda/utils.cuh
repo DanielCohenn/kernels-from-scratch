@@ -7,6 +7,7 @@
 
 
 #define THREADS_PER_BLOCK 16
+#define TILE 16
 
 #define CUDA_CHECK(call)                                                      \
     do {                                                                      \
