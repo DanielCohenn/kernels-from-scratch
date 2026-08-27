@@ -2,7 +2,7 @@ CompileFlags:
   Add:
     - -x
     - cuda
-    - --cuda-gpu-arch=sm_86
+    - --cuda-gpu-arch=sm_120
     - --cuda-path=/usr/local/cuda
     - -I/usr/local/cuda/include
     - -I/workspace/Git/kernels-from-scratch/src

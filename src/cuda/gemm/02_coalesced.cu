@@ -40,6 +40,7 @@ class CoalescedGemm : public GemmKernel<T>
 int main(int argc, char** argv) 
 {
     int m = 1024, n = 1024, k = 1024;
+    int numIter = 20;
     if (argc == 4) {
         m = std::atoi(argv[1]);
         n = std::atoi(argv[2]);
@@ -55,7 +56,7 @@ int main(int argc, char** argv)
     for (int i = 0; i < m * k; ++i) h_matA[i] = static_cast<float>(rand()) / RAND_MAX;
     for (int i = 0; i < k * n; ++i) h_matB[i] = static_cast<float>(rand()) / RAND_MAX;
 
-    CoalescedGemm<float> gemm(m, n, k, "gemm_coalesced_cuda");
+    CoalescedGemm<float> gemm(m, n, k, numIter, "gemm_coalesced");
     GemmMetrics metrics = gemm.run(h_matA, h_matB, h_matC, alpha, beta);
 
     std::cout << metrics.phase << " m=" << metrics.m << " n=" << metrics.n << " k=" << metrics.k
